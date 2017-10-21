@@ -49,10 +49,11 @@ def extract_features(path, title):
 	## get cepstragram
 	ncep = 13
 	cepstragram = sf.getFeatures(signal, fs, winlength, ncep)
-	plt.figure()
-	plt.title(title)
-	plt.imshow(cepstragram[0].T, origin='lower')
-	plt.axis('auto')
+	#plt.figure()
+	#plt.title(title)
+	#plt.imshow(cepstragram[0].T, origin='lower')
+	#plt.axis('auto')
+	features = sf.dynamic_features(cepstragram)
 
 
 if __name__ == "__main__":

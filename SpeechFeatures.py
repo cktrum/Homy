@@ -59,8 +59,13 @@ class SpeechFeatures():
 		return output
 
 	def dynamic_features(self, ceps):
-		delta = np.diff(ceps)
-		delta_delta = np.diff(ceps)
+		ceps = np.matrix(np.array(ceps)[0])
+		velocity = np.diff(ceps, n=1, axis=0).T
+		acceleration = np.diff(ceps, n=2, axis=0).T
+		ceps_transpose = ceps.T
+		dynamic = np.concatenate((ceps_transpose[:, 0:-2], velocity[:, 0:-1], acceleration), axis=0)
+
+		return dynamic
 
 	def wavread(self, filename):
 		s, fs, enc = wavread(filename)  # s in range -32768 to +32767
