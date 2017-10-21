@@ -14,7 +14,7 @@ def finite_duration():
 	g1 = GaussD(mean=np.matrix([0]), stdev=np.matrix([1]))
 	g2 = GaussD(mean=np.matrix([3]), stdev=np.matrix([2]))
 	h = HMM(markovChain, np.matrix([[g1], [g2]]))
-	[X,S] = h.rand(100)
+	[X,S] = h.rand(h, 100)
 
 	return (X,S)
 
@@ -25,7 +25,7 @@ def multi_dim_observation():
 	g1 = GaussD(mean=np.matrix([[0], [0]]), cov=np.matrix([[2, 1], [1, 4]]))
 	g2 = GaussD(mean=np.matrix([[3], [3]]), cov=np.matrix([[2, 1], [1, 4]]))
 	h = HMM(markovChain, np.matrix([[g1], [g2]]))
-	[X,S] = h.rand(100)
+	[X,S] = h.rand(h, 100)
 
 	return (X,S)
 
@@ -55,14 +55,35 @@ def extract_features(path, title):
 	#plt.axis('auto')
 	features = sf.dynamic_features(cepstragram)
 
+def test_forward():
+	initMatrix = np.matrix([[1.0], [0]])
+	transitionMatrix = np.matrix([[0.9, 0.1, 0], [0, 0.9, 0.1]])
+	mc = MarkovChain(initMatrix, transitionMatrix)
+	g1 = GaussD(mean=np.matrix([0]), stdev=np.matrix([1]))
+	g2 = GaussD(mean=np.matrix([3]), stdev=np.matrix([2]))
+
+	# output sequence
+	x = np.matrix([-0.2, 2.6, 1.3])
+	pX, logS = g1.prob(np.matrix([g1, g2]), x)
+	alphaHat, c = mc.forward(mc, pX)
+	print 'alphaHat', alphaHat
+	print 'c', c
+
+	h = HMM(mc, np.matrix([[g1], [g2]]))
+	logP = h.logprob(h, x)
+	print logP
 
 if __name__ == "__main__":
-	#(X,S) = finite_duration()
-	#(X,S) = multi_dim_observation()
-	
-	#print 'X =', X
-	#print 'S =', S
+	(X,S) = finite_duration()
+	print 'X =', X
+	print 'S =', S
 
+	(X,S) = multi_dim_observation()
+	print 'X =', X
+	print 'S =', S
+	
 	extract_features('/home/claudia/Documents/Studium/Master/3.Semester/PatternRecognition/Project/Sounds/female.wav', 'female')
-	extract_features('/home/claudia/Documents/Studium/Master/3.Semester/PatternRecognition/Project/Sounds/male.wav', 'male')
-	plt.show()
+	#extract_features('/home/claudia/Documents/Studium/Master/3.Semester/PatternRecognition/Project/Sounds/male.wav', 'male')
+	#plt.show()
+
+	test_forward()

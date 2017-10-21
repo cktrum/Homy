@@ -1,16 +1,18 @@
 import pdb
+import math
 import numpy as np
+from ProbGenModel import ProbGenModel
 
-class HMM():
+class HMM(ProbGenModel):
 	def __init__(self, markovChain, outputDist):
 		self.stateGen = markovChain
 		self.outputDist = outputDist
 
-	def rand(self, nSamples):
+	def rand(self, h, nSamples):
 		# TODO: find a better way to determine size of output
-		nOutput = self.outputDist[0][0,0].rand(1).shape[0]
+		nOutput = h.outputDist[0][0,0].rand(h.outputDist[0][0,0], 1).shape[0]
 		X = np.matrix(np.zeros((nOutput, nSamples)))
-		S = self.stateGen.rand(nSamples)
+		S = h.stateGen.rand(h.stateGen, nSamples)
 		if len(S) == 0:
 			print('Your state sequence begins with an end state')
 			return ([], [])
@@ -25,6 +27,25 @@ class HMM():
 				break
 
 			idx = int(S[i]) - 1
-			X[:,i] = self.outputDist[idx][0,0].rand(1)
+			X[:,i] = h.outputDist[idx][0,0].rand(h.outputDist[idx][0,0], 1)
 
 		return (X,S)
+
+	def logprob(self, hmm, x):
+		try:
+			hmmSize = len(hmm)
+		except:
+			hmmSize = 1
+		T = x.shape[1]
+		logP = np.zeros((hmmSize))
+		if hmmSize == 1:
+			p, logS = hmm.outputDist[0,0].prob(hmm.outputDist, x)
+			alphaHat, c = hmm.stateGen.forward(hmm.stateGen, p)
+			logP[0] = np.sum(np.log(c)) + np.sum(logS)
+		else:
+			for i in range(hmmSize):
+				p, logS = hmm[i].outputDist[0,0].prob(hmm[i].outputDist, x)
+				alphaHat, c = hmm[i].stateGen.forward(hmm[i].stateGen, p)
+				logP[i] = np.sum(np.log(c)) + np.sum(logS)
+
+		return logP
