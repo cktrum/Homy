@@ -76,6 +76,13 @@ class MarkovChain(ProbGenModel):
 
 		return lP
 
+	def finiteDuration(self, mc):
+		fd = mc.transitionProb.shape[1] == mc.transitionProb.shape[0] + 1
+		if fd:
+			#fd = np.full(np.sum(mc.transitionProb[:,-1])) > 0
+			fd = np.sum(mc.transitionProb[:,-1]) > 0
+		return fd
+
 	def forward(self, mc, pX):
 		pX = np.matrix(pX)
 		T = pX.shape[1] # number of observations
@@ -104,3 +111,21 @@ class MarkovChain(ProbGenModel):
 			c = np.concatenate((c, np.matrix(cEnd)), axis=1)
 
 		return (alphaHat, c)
+
+	def backward(self, mc, pX, c):
+		T = pX.shape[1]
+		nS = mc.getNStates()
+		q = mc.initialProb
+		A = mc.transitionProb
+		fin = mc.finiteDuration(mc)
+		betaHat = np.matrix(np.zeros((nS, T)))
+		if not fin:
+			betaHat[:, T-1] = np.ones((nS, 1)) / c[0,T-1]
+		else:
+			betaHat[:, T-1] = A[:, nS] / (c[0,T-1] * c[0,T])
+
+		for t in range(T-2, -1, -1):
+			for i in range(nS):
+				betaHat[i,t] = A[i, 0:nS] * (np.multiply(np.matrix(pX[:,t+1]).T, betaHat[:,t+1])) / c[0,t]
+
+		return betaHat

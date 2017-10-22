@@ -93,6 +93,35 @@ def test_forward():
 	logP = h1.logprob(np.matrix([h1, h2]), x)
 	print 'logP:', logP, 'expected: [-5.562463348 -6.345037882]'
 
+def test_backward():
+	initMatrix = np.matrix([[1.0], [0]])
+	transitionMatrix = np.matrix([[0.9, 0.1, 0], [0, 0.9, 0.1]])
+	x = np.matrix([-0.2, 2.6, 1.3])
+	c = np.matrix([1.0, 0.1625, 0.8266, 0.0581])
+
+	mc = MarkovChain(initMatrix, transitionMatrix)
+	g1 = GaussD(mean=np.matrix([0]), stdev=np.matrix([1]))
+	g2 = GaussD(mean=np.matrix([3]), stdev=np.matrix([2]))
+
+	pX, logS = g1.prob(np.matrix([[g1], [g2]]), x)
+	betaHat = mc.backward(mc, pX, c)
+	print 'betaHat:', betaHat
+	print 'expected: [1.0003 1.0393 0; 8.4182 9.3536 2.0822]'
+
+	initMatrix = np.matrix([[1.0], [0]])
+	transitionMatrix = np.matrix([[0.9, 0.1], [0.1, 0.9]])
+	x = np.matrix([-0.2, 2.6, 1.3])
+	
+	mc = MarkovChain(initMatrix, transitionMatrix)
+	g1 = GaussD(mean=np.matrix([0]), stdev=np.matrix([1]))
+	g2 = GaussD(mean=np.matrix([3]), stdev=np.matrix([2]))
+
+	pX, logS = g1.prob(np.matrix([g1, g2]), x)
+	alphaHat, c = mc.forward(mc, pX)
+	betaHat = mc.backward(mc, pX, c)
+	print 'betaHat:', betaHat
+	print 'expected: [1.0 6.798238264 1.125986646; 5.223087455 5.75095566 1.125986646]'
+
 if __name__ == "__main__":
 	if len(sys.argv) <= 1:
 		mode = 1
@@ -113,3 +142,5 @@ if __name__ == "__main__":
 		#plt.show()
 	elif mode == '3':
 		test_forward()
+	elif mode == '4':
+		test_backward()
