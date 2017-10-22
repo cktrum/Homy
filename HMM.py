@@ -33,7 +33,7 @@ class HMM(ProbGenModel):
 
 	def logprob(self, hmm, x):
 		try:
-			hmmSize = len(hmm)
+			hmmSize = hmm.shape[1]
 		except:
 			hmmSize = 1
 		T = x.shape[1]
@@ -44,8 +44,8 @@ class HMM(ProbGenModel):
 			logP[0] = np.sum(np.log(c)) + np.sum(logS)
 		else:
 			for i in range(hmmSize):
-				p, logS = hmm[i].outputDist[0,0].prob(hmm[i].outputDist, x)
-				alphaHat, c = hmm[i].stateGen.forward(hmm[i].stateGen, p)
+				p, logS = hmm[0,i].outputDist[0,0].prob(hmm[0,i].outputDist, x)
+				alphaHat, c = hmm[0,i].stateGen.forward(hmm[0,i].stateGen, p)
 				logP[i] = np.sum(np.log(c)) + np.sum(logS)
 
 		return logP

@@ -87,7 +87,7 @@ class MarkovChain(ProbGenModel):
 		alphaTmp = np.zeros((nS, 1))
 
 		alphaTmp = np.multiply(pX[:,0], mc.initialProb)
-		c[0,0] = np.sum(alphaTmp)
+		c[0,0] = np.sum(alphaTmp, axis=0)[0,0]
 		alphaHat[:,0] = alphaTmp / c[0,0]
 
 		# forward pass
