@@ -99,3 +99,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Audacity projects
+/Recordings/Audacity Projects

@@ -14,6 +14,18 @@ class ProbGenModel():
 	def logprob(self, pM, x):
 		return lP
 
+	@abc.abstractmethod
+	def adaptStart(self, pM):
+		return aState
+
+	@abc.abstractmethod
+	def adaptAccum(self, pM, aState, obsData):
+		return aState
+
+	@abc.abstractmethod
+	def adaptSet(self, pM, aState):
+		return pM
+
 	def prob(self, pD, x):
 		logP = pD[0,0].logprob(pD, x)
 		logS = np.max(logP, axis=0)

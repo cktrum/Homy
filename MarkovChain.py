@@ -11,12 +11,21 @@ class MarkovChain(ProbGenModel):
 	# initialise MarkovChain with given initial probability distribution as well as transition matrix
 	def __init__(self, initialProbMatrix, transitionProbMatrix):
 		self.initialProb = initialProbMatrix
-		self.transitionProb = transitionProbMatrix
+		self.transitionProb = np.matrix(transitionProbMatrix)
 
 	def getNStates(self):
 		nS = self.transitionProb.shape[0]
 		return nS
 
+	def getNextStates(self):
+		return self.getNStates()
+
+	def isLeftRight(self):
+		lowLeft = np.tril(self.transitionProb, -1)
+		lr = np.all(lowLeft[:] == 0)
+
+		return lr
+		
 	def rand(self, mc, T):
 		S = np.zeros((1, T)) #space for resulting row vector
 		nS = self.getNStates()
@@ -83,6 +92,43 @@ class MarkovChain(ProbGenModel):
 			fd = np.sum(mc.transitionProb[:,-1]) > 0
 		return fd
 
+	def adaptStart(self, mc):
+		aS = {'pI': [], 'pS': []}
+		aS['pI'] = np.zeros(mc.initialProb.shape)
+		aS['pS'] = np.zeros(mc.transitionProb.shape)
+
+		return aS
+
+	def adaptAccum(self, mc, aState, pX):
+		T = pX.shape[1]
+		nStates = mc.getNStates()
+		A = mc.transitionProb
+
+		alphaHat, c = self.forward(mc, pX)
+		betaHat = self.backward(mc, pX, c)
+
+		gamma = np.multiply(alphaHat, np.multiply(betaHat, np.tile(c[0,0:T], (nStates, 1))))
+		aState['pI'] = aState['pI'] + gamma[:,1]
+
+		pXbH = np.multiply(pX[:,1:], betaHat[:,1:])
+		aHpXbH = alphaHat[:,0:T-1] * pXbH.T
+		xi = np.multiply(aHpXbH, A[:,0:nStates])
+		aState['pS'][:,0:nStates] = aState['pS'][:,0:nStates] + xi
+
+		if self.finiteDuration(mc):
+			aState['pS'][:,nStates] = aState['pS'][:,nStates] + (np.multiply(np.matrix(alphaHat[:,T-1]), betaHat[:,T-1]) * c[0,T-1]).T
+
+		lP = np.sum(np.log(c))
+
+		return (aState, gamma, lP)
+
+
+	def adaptSet(self, mc, aState):
+		mc.initialProb = np.divide(aState['pI'], np.sum(aState['pI']))
+		mc.transitionProb = np.divide(aState['pS'], np.tile(np.matrix(np.sum(aState['pS'], axis=1)).T, (1, aState['pS'].shape[1])))
+
+		return mc
+
 	def forward(self, mc, pX):
 		pX = np.matrix(pX)
 		T = pX.shape[1] # number of observations
@@ -101,7 +147,7 @@ class MarkovChain(ProbGenModel):
 		for t in range(1, T):
 			for j in range(	nS):
 				sumRes = np.sum(np.multiply(mc.transitionProb[:,j], alphaHat[:,t-1]), axis=0)
-				alphaTmp[j] = np.multiply(pX[j,t], sumRes.T)
+				alphaTmp[j,0] = np.multiply(pX[j,t], sumRes.T)
 			c[0,t] = np.sum(alphaTmp)
 			alphaHat[:,t] = alphaTmp / c[0,t]
 
@@ -122,7 +168,7 @@ class MarkovChain(ProbGenModel):
 		if not fin:
 			betaHat[:, T-1] = np.ones((nS, 1)) / c[0,T-1]
 		else:
-			betaHat[:, T-1] = A[:, nS] / (c[0,T-1] * c[0,T])
+			betaHat[:, T-1] = np.matrix(A[:, nS]) / (c[0,T-1] * c[0,T])
 
 		for t in range(T-2, -1, -1):
 			for i in range(nS):

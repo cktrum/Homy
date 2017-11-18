@@ -6,6 +6,9 @@ from SpeechFeatures import SpeechFeatures
 from MarkovChain import MarkovChain
 from GaussD import GaussD
 from HMM import HMM
+from Dataset import Dataset
+from HMMTraining import HMMTraining
+
 import matplotlib.pyplot as plt
 
 def finite_duration():
@@ -122,6 +125,39 @@ def test_backward():
 	print 'betaHat:', betaHat
 	print 'expected: [1.0 6.798238264 1.125986646; 5.223087455 5.75095566 1.125986646]'
 
+def trainHMMs():
+	hmmTraining = HMMTraining()
+	defaultGaussD = GaussD()
+	data = Dataset('./Recordings/Commands/')
+	labels = data.getLabels()
+	states = [3]
+	hmms = []
+	testSet_features = None
+	testSet_sequences = None
+	testLabels = []
+	
+	for i in range(len(labels)):
+		(training, validation, test) = data.partitionDataset(labels[i])
+		trainingFeatures = training['features']
+		trainingSeq = training['sequences']
+		hmm = hmmTraining.makeLeftRightHMM(states[i], defaultGaussD, trainingFeatures, trainingSeq)
+		hmms.append(hmm)
+		
+		if testSet_features is None:
+			testSet_features = test['features']
+			testSet_sequences = test['sequences']
+		else:
+			testSet_features = np.concatenate((testSet_features, test['features']), axis=1)
+			testSet_sequences = np.concatenate((testSet_sequences, test['sequences']), axis=1)
+		testLabels.append([labels[i]] * len(test['sequences']))
+
+	hmms = np.matrix(hmms)
+	confusionMatrix = hmmTraining.validateModels(hmms, testSet_features, testSet_sequences, testLabels)
+	
+	print "confusionMatrix", confusionMatrix
+	plt.imshow(confusionMatrix)
+	plt.show()
+
 if __name__ == "__main__":
 	if len(sys.argv) <= 1:
 		mode = 1
@@ -137,10 +173,11 @@ if __name__ == "__main__":
 		print 'X =', X
 		print 'S =', S
 	elif mode == '2':	
-		extract_features('/home/claudia/Documents/Studium/Master/3.Semester/PatternRecognition/Project/Sounds/female.wav', 'female')
-		#extract_features('/home/claudia/Documents/Studium/Master/3.Semester/PatternRecognition/Project/Sounds/male.wav', 'male')
+		extract_features('./Recordings/Commands/play/play1.wav', 'play1')
 		#plt.show()
 	elif mode == '3':
 		test_forward()
 	elif mode == '4':
 		test_backward()
+	elif mode == '5':
+		trainHMMs()
