@@ -18,12 +18,8 @@ class HMMTraining():
 		hmm = HMM(mc, pD)
 		hmm = hmm.init(hmm, obsData, lData)
 
-		try:
-			hmm, logprobs = hmm.train(hmm, obsData, lData, 5, np.log(1.01))
-		except Exception:  # or the specific exception type thrown
-		    pdb.post_mortem()
-		    raise
-
+		hmm, logprobs = hmm.train(hmm, obsData, lData, 5, np.log(1.01))
+		
 		return hmm
 
 
@@ -51,14 +47,15 @@ class HMMTraining():
 
 		return mc
 
-	def validateModels(self, hmms, testSet, testSequences, testLabels):
+	def validateModels(self, hmms, testSet, testSequences, testLabels, labelIndices):
 		numClasses = hmms.shape[1]
 		confusionMatrix = np.zeros((numClasses, numClasses))
 
 		for i in range(len(testLabels)):
 			sample = self.extractSample(testSet, testSequences, i)
 			prob, c = self.classify(hmms, sample)
-			confusionMatrix[i,c] = confusionMatrix[i,c] + 1
+			idx = labelIndices[testLabels[i]]
+			confusionMatrix[idx,c] = confusionMatrix[idx,c] + 1
 
 		return confusionMatrix
 

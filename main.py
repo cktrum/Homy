@@ -128,16 +128,19 @@ def test_backward():
 def trainHMMs():
 	hmmTraining = HMMTraining()
 	defaultGaussD = GaussD()
+	
 	data = Dataset('./Recordings/Commands/')
+	
 	labels = data.getLabels()
-	states = [3]
+	states = [5] * len(labels)
 	hmms = []
 	testSet_features = None
 	testSet_sequences = None
 	testLabels = []
+	labelIndices = dict()
 	
 	for i in range(len(labels)):
-		(training, validation, test) = data.partitionDataset(labels[i])
+		(training, validation, test) = data.partitionDataset(labels[i], 0.8, 0.0, 0.2)
 		trainingFeatures = training['features']
 		trainingSeq = training['sequences']
 		hmm = hmmTraining.makeLeftRightHMM(states[i], defaultGaussD, trainingFeatures, trainingSeq)
@@ -146,13 +149,15 @@ def trainHMMs():
 		if testSet_features is None:
 			testSet_features = test['features']
 			testSet_sequences = test['sequences']
+			testLabels = [labels[i]] * len(test['sequences'])
 		else:
 			testSet_features = np.concatenate((testSet_features, test['features']), axis=1)
-			testSet_sequences = np.concatenate((testSet_sequences, test['sequences']), axis=1)
-		testLabels.append([labels[i]] * len(test['sequences']))
+			testSet_sequences = np.concatenate((testSet_sequences, test['sequences']), axis=0)
+			testLabels = np.concatenate((testLabels, [labels[i]] * len(test['sequences'])), axis=0)
+		labelIndices[labels[i]] = i
 
 	hmms = np.matrix(hmms)
-	confusionMatrix = hmmTraining.validateModels(hmms, testSet_features, testSet_sequences, testLabels)
+	confusionMatrix = hmmTraining.validateModels(hmms, testSet_features, testSet_sequences, testLabels, labelIndices)
 	
 	print "confusionMatrix", confusionMatrix
 	plt.imshow(confusionMatrix)
@@ -180,4 +185,9 @@ if __name__ == "__main__":
 	elif mode == '4':
 		test_backward()
 	elif mode == '5':
-		trainHMMs()
+		try:
+			trainHMMs()
+		except Exception:  # or the specific exception type thrown
+		    pdb.post_mortem()
+		    raise
+			

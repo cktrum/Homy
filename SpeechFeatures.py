@@ -70,6 +70,11 @@ class SpeechFeatures():
 	def wavread(self, filename):
 		s, fs, enc = wavread(filename)  # s in range -32768 to +32767
 		s = np.array(s)
-		s = s / max(abs(s)) 
+		s = s / np.amax(np.abs(s)) 
+		try:
+			s.shape[1]
+			s = s[:,0]
+		except:
+			s = s
 
 		return (s,fs,enc)

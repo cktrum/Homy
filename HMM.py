@@ -58,7 +58,7 @@ class HMM(ProbGenModel):
 		try:
 			hmm.shape
 			isMatrix = True
-			hmmSize = hmm.shape[0]
+			hmmSize = hmm.shape[1]
 		except:
 			isMatrix = False
 			hmmSize = 1
