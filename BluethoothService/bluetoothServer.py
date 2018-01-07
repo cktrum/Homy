@@ -1,4 +1,5 @@
 import bluetooth
+from SongsLibrary import *
 
 def start_bluetooth_service():
     server_sock=bluetooth.BluetoothSocket( bluetooth.L2CAP )
@@ -7,6 +8,7 @@ def start_bluetooth_service():
 
     server_sock.bind(("",port))
     server_sock.listen(1)
+    print("Listening for connections on port ", port)
 
     #uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ef"
     #bluetooth.advertise_service( server_sock, "SampleServerL2CAP",
@@ -19,8 +21,13 @@ def start_bluetooth_service():
 
 def run():
     # Send list with names of songs
-    songs = get_list_of_songs()
-    data = transform_to_correct_format(songs)
+    print("Setup songs library")
+    library = SongsLibrary()
+    library.setup()
+    songs = library.get_list_of_songs()
+    data = transform_format(songs)
+    
+    print("Send %d songs to client", len(songs))
     client_sock.send(data)
     
     while True:
@@ -36,3 +43,10 @@ def run():
 
     client_sock.close()
     server_sock.close()
+    
+def transform_format(songs):
+    return songs
+
+if  __name__ =='__main__':
+    start_bluetooth_service()    
+    run()
