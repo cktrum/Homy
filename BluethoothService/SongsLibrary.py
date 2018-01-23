@@ -37,7 +37,7 @@ class SongsLibrary():
     def __init__(self):
         self.songs = []
         self.page = 0
-        self.songsPerPage = 20
+        self.itemsPerPage = 20
         self.nSongs = 0
         self.nPages = 0
         engine = create_engine('sqlite:///SongsLibrary')
@@ -84,7 +84,7 @@ class SongsLibrary():
         self.songs = self.read_directories(path)
         self.page = 0
         self.nSongs = len(self.songs)
-        self.nPages = math.ceil(self.nSongs/self.songsPerPage)
+        self.nPages = math.ceil(self.nSongs/self.itemsPerPage)
         
     def read_directories(self, path=None):
         songs = []
@@ -109,8 +109,8 @@ class SongsLibrary():
         if page is not None:
             self.page = page
             
-        offset = self.page * self.songsPerPage
-        limit = self.songsPerPage
+        offset = self.page * self.itemsPerPage
+        limit = self.itemsPerPage
         query = self.session.query(Artist).order_by(Artist.name.asc()).limit(limit).offset(offset)
         
         artists = []
@@ -125,9 +125,9 @@ class SongsLibrary():
             self.page = page
             
         if offset is None:
-            offset = self.page * self.songsPerPage
+            offset = self.page * self.itemsPerPage
         if limit is None:
-            limit = self.songsPerPage
+            limit = self.itemsPerPage
         query = self.session.query(Song).order_by(Song.title.asc()).limit(limit).offset(offset)
         
         songs = []
