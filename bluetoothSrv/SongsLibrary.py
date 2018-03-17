@@ -49,7 +49,10 @@ class SongsLibrary():
             self.session = DBSession()
         except:
             self.session = None
-        
+    
+    def get_items_per_page(self):
+        return self.itemsPerPage
+    
     def create_database(self):
         engine = create_engine('sqlite:////home/pi/Documents/SongsLibrary.db')
         Base.metadata.create_all(engine)
@@ -85,12 +88,22 @@ class SongsLibrary():
                         continue
         self.session.commit()
     
-    def get_list_of_artists(self, page=None):
-        if page is not None:
-            self.page = page
+    def get_total_number_of_artists(self):
+        nArtists = self.session.query(Artist).count()
+        return nArtists
+    
+    def get_list_of_artists(self, limit=None, offset=None):
+      
+        if offset is None:
+            offset = self.page * self.itemsPerPage
+        if limit is None:
+            limit = self.itemsPerPage
             
-        offset = self.page * self.itemsPerPage
-        limit = self.itemsPerPage
+        if limit < 0:
+            limit = 0
+        if offset < 0:
+            offset = 0
+            
         query = self.session.query(Artist).order_by(Artist.name.asc()).limit(limit).offset(offset)
         
         artists = []
@@ -99,16 +112,18 @@ class SongsLibrary():
             
         return artists
     
-    def get_list_of_songs(self, page=None, limit=None, offset=None):
+    def get_list_of_songs(self, limit=None, offset=None):
         
-        if page is not None:
-            self.page = page
-            
         if offset is None:
             offset = self.page * self.itemsPerPage
         if limit is None:
             limit = self.itemsPerPage
-        pdb.set_trace()
+        
+        if limit < 0:
+            limit = 0
+        if offset < 0:
+            offset = 0
+        
         query = self.session.query(Song).order_by(Song.title.asc()).limit(limit).offset(offset)
         
         songs = []
