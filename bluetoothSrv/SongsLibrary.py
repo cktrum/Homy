@@ -9,6 +9,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import relationship
 
+import pdb
+
 Base = declarative_base()
 
     
@@ -40,13 +42,16 @@ class SongsLibrary():
         self.itemsPerPage = 20
         self.nSongs = 0
         self.nPages = 0
-        engine = create_engine('sqlite:///SongsLibrary')
-        Base.metadata.bind = engine
-        DBSession = sessionmaker(bind=engine)
-        self.session = DBSession()
+        try:
+            engine = create_engine('sqlite:////home/pi/Documents/SongsLibrary.db')
+            Base.metadata.bind = engine
+            DBSession = sessionmaker(bind=engine)
+            self.session = DBSession()
+        except:
+            self.session = None
         
     def create_database(self):
-        engine = create_engine('sqlite:///SongsLibrary')
+        engine = create_engine('sqlite:////home/pi/Documents/SongsLibrary.db')
         Base.metadata.create_all(engine)
         
     def update_database(self, path=None):
@@ -67,43 +72,18 @@ class SongsLibrary():
                         if title is None or artist is None or album is None:
                             continue
                         new_artist = Artist(name=artist)
-                        artist_obj = session.merge(new_artist)
+                        artist_obj = self.session.merge(new_artist)
                         new_album = Album(name=album)
-                        album_obj = session.merge(new_album)
-                        session.flush()
+                        album_obj = self.session.merge(new_album)
+                        self.session.flush()
                         new_song = Song(artist=artist_obj, title=title, album=album_obj, filepath=path)
-                        session.merge(new_song)
+                        self.session.merge(new_song)
                         print(path)
                     except:
                         tb = traceback.format_exc()
                         print(tb)
                         continue
-        session.commit()
-        
-    def setup(self, path=None):
-        self.songs = self.read_directories(path)
-        self.page = 0
-        self.nSongs = len(self.songs)
-        self.nPages = math.ceil(self.nSongs/self.itemsPerPage)
-        
-    def read_directories(self, path=None):
-        songs = []
-        if path is None:
-            path = "/media/pi/Seagate Backup Plus Drive/Music/"
-        
-        for root, dirs, files in os.walk(path):
-            for file in files:
-                if file.endswith(".mp3"):
-                    print(os.path.join(root, file))
-                    try:
-                        audiofile = eyed3.load(os.path.join(root, file))
-                        artist = audiofile.tag.artist
-                        title = audiofile.tag.title
-                        songs.append({'title': title, 'artist': artist})
-                    except:
-                        continue
-                    
-        return songs
+        self.session.commit()
     
     def get_list_of_artists(self, page=None):
         if page is not None:
@@ -128,6 +108,7 @@ class SongsLibrary():
             offset = self.page * self.itemsPerPage
         if limit is None:
             limit = self.itemsPerPage
+        pdb.set_trace()
         query = self.session.query(Song).order_by(Song.title.asc()).limit(limit).offset(offset)
         
         songs = []
