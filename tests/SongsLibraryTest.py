@@ -11,6 +11,7 @@ class SongsLibraryTest(unittest.TestCase):
     def tearDown(self):
         self.lib = None
     
+    ### SONGS ###
     def test_receive_songs_correct_type(self):
         songs = self.lib.get_list_of_songs()
         self.assertIsInstance(songs, list)
@@ -21,6 +22,7 @@ class SongsLibraryTest(unittest.TestCase):
         self.assertIn('artist', songs[0])
         self.assertIn('album', songs[0])
         self.assertIn('path', songs[0])
+        self.assertIn('length', songs[0])
         
     def test_receive_songs_limit_parameter(self):
         nSongs = 10
@@ -40,7 +42,28 @@ class SongsLibraryTest(unittest.TestCase):
         songs = self.lib.get_list_of_songs(offset=offset, limit=limit)
         self.assertIsInstance(songs, list)
         self.assertEqual(len(songs), 0)
-                
+
+    def test_receive_songs_by_letter(self):
+        letter = 'h'
+        songs = self.lib.get_list_of_songs_by_letter(letter=letter)
+        self.assertIsInstance(songs, list)
+        self.assertEqual(songs[0][0], letter)
+        self.assertEqual(songs[-1][0], letter)
+
+    def test_receive_songs_of_album(self):
+        album = 'Word of Mouth'
+        songs = self.lib.get_list_of_songs_by_album(album=album)
+        self.assertIsInstance(songs, list)
+        for i in range(1, len(songs)):
+            self.assertEqual(songs[i]['album'].lower(), album.lower())
+
+    def test_receive_songs_of_album_case_sensitivity(self):
+        album = 'word of mouth'
+        songs = self.lib.get_list_of_songs_by_album(album=album)
+        for i in range(1, len(songs)):
+            self.assertEqual(songs[i]['album'].lower(), album)
+
+    ### ARTISTS ###       
     def test_receive_artists_correct_type(self):
         artists = self.lib.get_list_of_artists()
         self.assertIsInstance(artists, list)
