@@ -47,8 +47,8 @@ class SongsLibraryTest(unittest.TestCase):
         letter = 'h'
         songs = self.lib.get_list_of_songs_by_letter(letter=letter)
         self.assertIsInstance(songs, list)
-        self.assertEqual(songs[0][0], letter)
-        self.assertEqual(songs[-1][0], letter)
+        self.assertEqual(songs[0]['title'][0].lower(), letter.lower())
+        self.assertEqual(songs[-1]['title'][0].lower(), letter.lower())
 
     def test_receive_songs_of_album(self):
         album = 'Word of Mouth'

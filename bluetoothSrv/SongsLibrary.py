@@ -88,6 +88,7 @@ class SongsLibrary():
                         artist = audiofile.tag.artist
                         title = audiofile.tag.title
                         album = audiofile.tag.album
+                        length = audiofile.info.time_secs
                         if title is None or artist is None or album is None:
                             continue
                         new_artist = Artist(name=artist)
@@ -95,7 +96,7 @@ class SongsLibrary():
                         new_album = Album(name=album)
                         album_obj = self.session.merge(new_album)
                         self.session.flush()
-                        new_song = Song(artist=artist_obj, title=title, album=album_obj, filepath=path)
+                        new_song = Song(artist=artist_obj, title=title, album=album_obj, filepath=path, length=length)
                         self.session.merge(new_song)
                         print(path)
                     except:
@@ -109,16 +110,7 @@ class SongsLibrary():
         return nArtists
     
     def get_list_of_artists(self, limit=None, offset=None):
-      
-        if offset is None:
-            offset = self.page * self.itemsPerPage
-        if limit is None:
-            limit = self.itemsPerPage
-            
-        if limit < 0:
-            limit = 0
-        if offset < 0:
-            offset = 0
+        offset,limit = self.validate_offset_and_limit(offset, limit)
             
         query = self.session.query(Artist).order_by(Artist.name.asc()).limit(limit).offset(offset)
         
@@ -129,27 +121,58 @@ class SongsLibrary():
         return artists
     
     def get_list_of_songs(self, limit=None, offset=None):
-        
-        if offset is None:
-            offset = self.page * self.itemsPerPage
-        if limit is None:
-            limit = self.itemsPerPage
-        
-        if limit < 0:
-            limit = 0
-        if offset < 0:
-            offset = 0
+        offset,limit = self.validate_offset_and_limit(offset, limit)
         
         query = self.session.query(Song).order_by(Song.title.asc()).limit(limit).offset(offset)
-        
-        songs = []
-        for row in query:
-            songs.append({'title': row.title, 'artist': row.artist.name, 'album': row.album.name, 'path': row.filepath})
-            
-        return songs
+        return self.format_songs_from_query(query)
+
+    def get_list_of_songs_by_letter(self, letter, limit=None, offset=None):
+        offset,limit = self.validate_offset_and_limit(offset, limit)
+
+        if letter is None:
+            return []
+
+        query = self.session.query(Song).filter(Song.title.like(letter + '%')).limit(limit).offset(offset)
+        return self.format_songs_from_query(query)
+
+    def get_list_of_songs_by_album(self, album, limit=None, offset=None):
+        offset,limit = self.validate_offset_and_limit(offset, limit)
+
+        if album is None:
+            return []
+
+        album = album.lower()
+        query = self.session.query(Song).join(Song.album).filter(Album.name.like(album)).limit(limit).offset(offset)
+        return self.format_songs_from_query(query)
         
     def go_to_next_page(self):
         self.page = min(self.nPages, self.page + 1)
         
     def go_to_prev_page(self):
         self.page = max(0, self.page - 1)
+
+    def validate_offset_and_limit(self, offset, limit):
+        if offset is None:
+            offset = self.page * self.itemsPerPage
+        if limit is None:
+            limit = self.itemsPerPage
+            
+        if limit < 0:
+            limit = 0
+        if offset < 0:
+            offset = 0
+
+        return (offset, limit)
+
+    def format_songs_from_query(self, query_result):
+        songs = []
+        for row in query_result:
+            songs.append({
+                'title': row.title,
+                'artist': row.artist.name,
+                'album': row.album.name,
+                'path': row.filepath,
+                'length': row.length
+            })
+            
+        return songs
