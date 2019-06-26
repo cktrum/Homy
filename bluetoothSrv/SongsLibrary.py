@@ -3,6 +3,7 @@ import sys
 import eyed3
 import math
 import traceback
+import json
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -42,25 +43,40 @@ class SongsLibrary():
         self.itemsPerPage = 20
         self.nSongs = 0
         self.nPages = 0
+        self.config = dict()
         try:
-            engine = create_engine('sqlite:////home/pi/Documents/SongsLibrary.db')
+            self.config = self.read_config()
+        except Exception as e:
+            print(e)
+            self.session = None
+            return
+
+        try:
+            engine = create_engine('sqlite:///' + self.config['songLibraryPath'])
             Base.metadata.bind = engine
             DBSession = sessionmaker(bind=engine)
             self.session = DBSession()
         except:
             self.session = None
     
+    def read_config(self):
+        data = dict()
+        current_path = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        with open(os.path.join(current_path, 'config.json')) as config_file:
+            data = json.load(config_file)
+        return data
+
     def get_items_per_page(self):
         return self.itemsPerPage
     
     def create_database(self):
-        engine = create_engine('sqlite:////home/pi/Documents/SongsLibrary.db')
+        engine = create_engine('sqlite:///' + self.config['songLibraryPath'])
         Base.metadata.create_all(engine)
         
     def update_database(self, path=None):
         
         if path is None:
-                path = "/media/pi/Seagate Backup Plus Drive/Music/"
+            path = self.config['mediaPath']
             
         for root, dirs, files in os.walk(path):
             for file in files:
