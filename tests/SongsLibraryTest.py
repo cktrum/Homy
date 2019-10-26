@@ -103,6 +103,35 @@ class SongsLibraryTest(unittest.TestCase):
         artists = self.lib.get_list_of_artists(offset=offset, limit=limit)
         self.assertEqual(len(artists), 5)
         
+    def test_go_to_next_page_(self):
+        limit = 10
+        songs = self.lib.get_list_of_songs(limit=limit)
+        first_song_on_page = songs[0]
+        self.assertEqual(len(songs), limit)
+        self.lib.go_to_next_page('Song')
+        songs = self.lib.get_list_of_songs(limit=limit)
+        self.lib.go_to_next_page()
+        self.assertEqual(len(songs), limit)
+        self.assertNotEqual(first_song_on_page, songs[0])
+        
+    def test_go_to_previous_page_when_on_first_page(self):
+        self.lib.reset_page('Song')
+        songs = self.lib.get_list_of_songs()
+        first_song_on_page = songs[0]
+        self.lib.go_to_prev_page()
+        songs = self.lib.get_list_of_songs()
+        self.assertEqual(first_song_on_page, songs[0])
+        
+    def test_go_to_previous_page_when_on_second_page(self):
+        self.lib.reset_page('Song')
+        self.lib.go_to_next_page('Song')
+        songs = self.lib.get_list_of_songs()
+        first_song_on_page = songs[0]
+        self.lib.go_to_prev_page('Song')
+        songs = self.lib.get_list_of_songs()
+        self.assertNotEqual(first_song_on_page, songs[0])
+           
+        
 if __name__ == '__main__':
     #suite = unittest.TestLoader().loadTestsFromTestCase(SongsLibraryTest)
     #suite.run()

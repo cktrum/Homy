@@ -33,7 +33,8 @@ class BluetoothSrv():
         print("Accepted connection from ",address)
         
     def run(self):
-            
+        # TODO: implement state machine
+        
         # Send list with names of songs
         print("Setup songs library")
         self.library.setup()

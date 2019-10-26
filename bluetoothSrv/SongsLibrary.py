@@ -39,10 +39,11 @@ class Song(Base):
 class SongsLibrary():
     def __init__(self):
         self.songs = []
-        self.page = 0
+        self.SongPage = 0
+        self.ArtistPage = 0
         self.itemsPerPage = 20
         self.nSongs = 0
-        self.nPages = 0
+        self.nArtists = 0
         self.config = dict()
         try:
             self.config = self.read_config()
@@ -56,7 +57,11 @@ class SongsLibrary():
             Base.metadata.bind = engine
             DBSession = sessionmaker(bind=engine)
             self.session = DBSession()
-        except:
+            
+            self.nArtists = self.session.query(Artist).count()
+            self.nSongs = self.session.query(Song).count()
+        except Exception as e:
+            print(e)
             self.session = None
     
     def read_config(self):
@@ -103,14 +108,23 @@ class SongsLibrary():
                         tb = traceback.format_exc()
                         print(tb)
                         continue
-        self.session.commit()
+        self.session.commit()     
     
     def get_total_number_of_artists(self):
-        nArtists = self.session.query(Artist).count()
-        return nArtists
+        return self.nArtists
+    
+    def get_total_number_of_songs(self):
+        return self.nSongs
+    
+    def get_number_of_pages(self, item=None):
+        if item == 'Song':
+            return math.ceil(self.nSongs / self.itemsPerPage)
+        elif item == 'Artist':
+            return math.ceil(self.nArtists / self.itemsPerPage)
+        return 0
     
     def get_list_of_artists(self, limit=None, offset=None):
-        offset,limit = self.validate_offset_and_limit(offset, limit)
+        offset,limit = self.validate_offset_and_limit(offset, limit, 'Artist')
             
         query = self.session.query(Artist).order_by(Artist.name.asc()).limit(limit).offset(offset)
         
@@ -121,13 +135,13 @@ class SongsLibrary():
         return artists
     
     def get_list_of_songs(self, limit=None, offset=None):
-        offset,limit = self.validate_offset_and_limit(offset, limit)
+        offset,limit = self.validate_offset_and_limit(offset, limit, 'Song')
         
         query = self.session.query(Song).order_by(Song.title.asc()).limit(limit).offset(offset)
         return self.format_songs_from_query(query)
 
     def get_list_of_songs_by_letter(self, letter, limit=None, offset=None):
-        offset,limit = self.validate_offset_and_limit(offset, limit)
+        offset,limit = self.validate_offset_and_limit(offset, limit, 'Song')
 
         if letter is None:
             return []
@@ -136,7 +150,7 @@ class SongsLibrary():
         return self.format_songs_from_query(query)
 
     def get_list_of_songs_by_album(self, album, limit=None, offset=None):
-        offset,limit = self.validate_offset_and_limit(offset, limit)
+        offset,limit = self.validate_offset_and_limit(offset, limit, 'Song')
 
         if album is None:
             return []
@@ -145,15 +159,33 @@ class SongsLibrary():
         query = self.session.query(Song).join(Song.album).filter(Album.name.like(album)).limit(limit).offset(offset)
         return self.format_songs_from_query(query)
         
-    def go_to_next_page(self):
-        self.page = min(self.nPages, self.page + 1)
+    def reset_page(self, item=None):
+        if item == 'Song':
+            self.SongPage = 0
+        elif item == 'Artist':
+            self.ArtistPage = 0
         
-    def go_to_prev_page(self):
-        self.page = max(0, self.page - 1)
+    def go_to_next_page(self, item=None):
+        nPages = self.get_number_of_pages(item)
+        if item == 'Song':
+            self.SongPage = min(nPages, self.SongPage + 1)
+        elif item == 'Artist':
+            self.ArtistPage = min(nPages, self.ArtistPage + 1)
+        
+    def go_to_prev_page(self, item=None):
+        if item == 'Song':
+            self.SongPage = max(0, self.SongPage - 1)
+        elif item == 'Artist':
+            self.ArtistPage = min(0, self.ArtistPage - 1)
 
-    def validate_offset_and_limit(self, offset, limit):
+    def validate_offset_and_limit(self, offset, limit, item=None):
+        page = 0
+        if item == 'Song':
+            page = self.SongPage
+        elif item == 'Artist':
+            page = self.ArtistPage
         if offset is None:
-            offset = self.page * self.itemsPerPage
+            offset = page * self.itemsPerPage
         if limit is None:
             limit = self.itemsPerPage
             
