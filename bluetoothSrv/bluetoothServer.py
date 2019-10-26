@@ -2,6 +2,7 @@ import bluetooth
 import re
 import os
 from SongsLibrary import *
+from StateMachine import Runnable
 
 class BluetoothSrv():
 
@@ -11,6 +12,7 @@ class BluetoothSrv():
         self.server_sock = None
         self.client_sock = None
         self.buffer_size = 1
+        self.runnable = Runnable()
         
     def start_bluetooth_service(self):
         
@@ -48,12 +50,15 @@ class BluetoothSrv():
         while True:
         
             # Wait for command from client (picking a song, scrolling, etc)
-            command = self.client_sock.recv(1024)
-            print("Received command %s" % (command))
+            input = self.client_sock.recv(1024)
+            print("Received command %s" % (input))
             
-            # Execute command
-            func_to_execute = self.execute_command(command)
-            response = func_to_execute()
+            # Execute command in current state
+            command = self.extract_command(input)
+            response = self.runnable.step(command)
+
+            #func_to_execute = self.execute_command(command)
+            #response = func_to_execute()
             print("response", response)
             
             if response is not None:
@@ -71,6 +76,17 @@ class BluetoothSrv():
             data = data + song
             
         return data
+
+    def extract_command(self, input):
+        data = re.search("b'(.*)'", str(input))
+        data = data.group(1)
+        # extract potential arguments
+        arguments = re.search("\((.*)\)", data)
+        args = []
+        for group in arguments.group:
+            args.append(group)
+        
+        return (data, args)
 
     def execute_command(self, input):
         data = re.search("b'(.*)'", str(input))

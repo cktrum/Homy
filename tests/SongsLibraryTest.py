@@ -4,7 +4,6 @@ import pdb
 from .context import bluetoothSrv
 
 class SongsLibraryTest(unittest.TestCase):
-    # execute tests with python -m tests.SongsLibraryTest
     def setUp(self):
         self.lib = bluetoothSrv.SongsLibrary()
         
@@ -133,6 +132,8 @@ class SongsLibraryTest(unittest.TestCase):
            
         
 if __name__ == '__main__':
+    # execute tests with python -m tests.SongsLibraryTest
+    
     #suite = unittest.TestLoader().loadTestsFromTestCase(SongsLibraryTest)
     #suite.run()
     unittest.main()
