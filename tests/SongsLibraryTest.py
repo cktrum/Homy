@@ -137,8 +137,6 @@ class SongsLibraryTest(unittest.TestCase):
            
         
 if __name__ == '__main__':
-    # execute tests with python -m tests.SongsLibraryTest
+    # execute tests with python -m unittest tests.SongsLibraryTest
     
-    #suite = unittest.TestLoader().loadTestsFromTestCase(SongsLibraryTest)
-    #suite.run()
     unittest.main()

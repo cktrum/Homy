@@ -1,43 +1,35 @@
-from SongsLibrary import *
+from SongsLibrary import SongsLibrary
 
 class State:
     def __init__(self):
         self.library = SongsLibrary()
-        self.library.setup()
 
-    def run(self, command):
+    def run(self):
         assert 0, "run not implemented"
 
     def transition(self, event):
-        assert 0, "run not implemented"
+        assert 0, "transition not implemented"
 
 class StartUp(State):
-    def run(self, command):
-        switcher = {
-            "songs": (self.library.get_list_of_songs, 'selected_songs'),
-            "artists": (self.library.get_list_of_artists, 'selected_artists')
-        }
-        
-        (command, event) = switcher.get(data, lambda: ("nothing", None))
-        response = command()
-
-        if event:
-            self.transition(event)
+    def run(self):
+        # Send command to show welcome screen
+        print("Welcome")
 
     def transition(self, event):
-        if event == 'selected_songs':
-            self.state = BrowsingSongs()
+        if event == 'songs':
+            return BrowsingSongs()
 
 class BrowsingSongs(State):
-    def run(self, command):
-        print('BrowsingSongs')
+    def run(self):
+        response = self.library.get_list_of_songs()
+        # Display all songs in response - send command
 
     def transition(self, event):
         if event == 'play_song':
             self.state = Playing()
 
 class Playing(State):
-    def run(self, command):
+    def run(self):
         print('Playing')
 
     def transition(self, event):
@@ -46,8 +38,8 @@ class Playing(State):
 class Runnable:
     def __init__(self):
         self.state = StartUp()
+        self.state.run()
 
     def step(self, command):
-        response = self.state.run(command)
-        self.state.transition()
-        return response
+        self.state = self.state.transition(command)
+        self.state.run()
