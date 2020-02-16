@@ -1,6 +1,6 @@
 import unittest
 
-from .context import bluetoothSrv
+from bluetoothSrv.StateMachine import StateMachine
 
 class StateMachineTest(unittest.TestCase):
     def setUp(self):

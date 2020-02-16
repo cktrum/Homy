@@ -37,20 +37,21 @@ class Song(Base):
 
 
 class SongsLibrary():
-    def __init__(self):
+    def __init__(self, config=None):
         self.songs = []
         self.SongPage = 0
         self.ArtistPage = 0
         self.itemsPerPage = 20
         self.nSongs = 0
         self.nArtists = 0
-        self.config = dict()
-        try:
-            self.config = self.read_config()
-        except Exception as e:
-            print(e)
-            self.session = None
-            return
+        self.config = config    
+        if not config:
+            try:
+                self.config = self.read_config()
+            except Exception as e:
+                print("Error reading config", e)
+                self.session = None
+                return
 
         try:
             engine = create_engine('sqlite:///' + self.config['songLibraryPath'])
@@ -61,7 +62,7 @@ class SongsLibrary():
             self.nArtists = self.session.query(Artist).count()
             self.nSongs = self.session.query(Song).count()
         except Exception as e:
-            print(e)
+            print("Error creating database engine", e)
             self.session = None
     
     def read_config(self):

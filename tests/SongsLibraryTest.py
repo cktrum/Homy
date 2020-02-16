@@ -1,11 +1,16 @@
 import unittest
-import pdb
+import os
 
-from .context import bluetoothSrv
+from bluetoothSrv.SongsLibrary import SongsLibrary
 
 class SongsLibraryTest(unittest.TestCase):
     def setUp(self):
-        self.lib = bluetoothSrv.SongsLibrary()
+        currentPath = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+        config = {
+            "songLibraryPath": os.path.join(currentPath, "SongsLibrary.db"),
+            "mediaPath": ""
+        }
+        self.lib = SongsLibrary(config=config)
         
     def tearDown(self):
         self.lib = None
