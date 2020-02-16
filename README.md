@@ -1,5 +1,8 @@
 # Homy
 
+## CI Status
+[![Build Status](https://travis-ci.org/cktrum/Homy.svg?branch=master)](https://travis-ci.org/cktrum/Homy)
+
 ## Setup
 ### Installation
 * Make sure python is installed
